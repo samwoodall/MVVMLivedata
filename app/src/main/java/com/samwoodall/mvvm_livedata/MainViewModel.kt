@@ -4,11 +4,11 @@ import androidx.lifecycle.*
 
 class MainViewModel(private val repo: Repository = Repository(), signInRepository: SignInRepository = SignInRepository()) : ViewModel(),
     LifecycleObserver {
-    private val viewModelResultObserver: Observer<UserData> = Observer { transformData(it) }
-    private val viewModelResultsObserver: Observer<Unit> = Observer {}
+    private val viewModelMapObserver: Observer<UserData> = Observer { transformData(it) }
+    private val viewModelObserver: Observer<Unit> = Observer {}
 
-    private val viewModelResult = Transformations.switchMap(signInRepository.getOauthToken()) { repo.getData(it) }
-    private val viewModelResults = Transformations.map(repo.getData("")) { transformData(it) }
+    private val viewModelFlatMap = Transformations.switchMap(signInRepository.getOauthToken()) { repo.getData(it) }
+    private val viewModelMap = Transformations.map(repo.getData("")) { transformData(it) }
     private val viewModelZip = repo.getData("").combineAndCompute(repo.getData("")) { a, b -> transformData(a.copy(userAge = b.userAge))}
 
     private val mainViewModelData: MutableLiveData<MainViewModelData> = MutableLiveData<MainViewModelData>().apply {
@@ -23,16 +23,16 @@ class MainViewModel(private val repo: Repository = Repository(), signInRepositor
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     private fun registerUserInfo() {
-        viewModelZip.observeForever(viewModelResultsObserver)
-        viewModelResult.observeForever(viewModelResultObserver)
-        viewModelResults.observeForever(viewModelResultsObserver)
+        viewModelZip.observeForever(viewModelObserver)
+        viewModelFlatMap.observeForever(viewModelMapObserver)
+        viewModelMap.observeForever(viewModelObserver)
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     private fun unregisterUserInfo() {
-        viewModelResult.removeObserver(viewModelResultObserver)
-        viewModelResults.removeObserver(viewModelResultsObserver)
-        viewModelZip.removeObserver(viewModelResultsObserver)
+        viewModelFlatMap.removeObserver(viewModelMapObserver)
+        viewModelMap.removeObserver(viewModelObserver)
+        viewModelZip.removeObserver(viewModelObserver)
     }
 }
 
