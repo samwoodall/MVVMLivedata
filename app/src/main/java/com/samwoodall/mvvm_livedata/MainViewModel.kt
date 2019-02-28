@@ -4,35 +4,28 @@ import androidx.lifecycle.*
 
 class MainViewModel(private val repo: Repository = Repository(), signInRepository: SignInRepository = SignInRepository()) : ViewModel(),
     LifecycleObserver {
-    private val viewModelMapObserver: Observer<UserData> = Observer { transformData(it) }
-    private val viewModelObserver: Observer<Unit> = Observer {}
-
     private val viewModelFlatMap = Transformations.switchMap(signInRepository.getOauthToken()) { repo.getData(it) }
-    private val viewModelMap = Transformations.map(repo.getData("")) { transformData(it) }
-    private val viewModelZip = repo.getData("").combineAndCompute(repo.getData("")) { a, b -> transformData(a.copy(userAge = b.userAge))}
+    private val viewModelMap = Transformations.map(repo.getData("")) { it.copy(userName = "James") }
+    private val viewModelZip = repo.getData("").combineAndCompute(repo.getData("")) { a, b -> a to b}
 
-    private val mainViewModelData: MutableLiveData<MainViewModelData> = MutableLiveData<MainViewModelData>().apply {
+    private val mainViewModelData: MediatorLiveData<MainViewModelData> = MediatorLiveData<MainViewModelData>().apply {
         value = MainViewModelData.Loading
     }
 
     fun getMainViewModel(): LiveData<MainViewModelData> = mainViewModelData
 
-    private fun transformData(userData: UserData) {
-        mainViewModelData.value = MainViewModelData.Complete(userData.userName, userData.userAge, "${userData.userName} is ${userData.userAge}")
-    }
+    init {
+        mainViewModelData.addSource(viewModelFlatMap) {userData ->
+            mainViewModelData.value = MainViewModelData.Complete(userData.userName, userData.userAge, "${userData.userName} is ${userData.userAge}")
+        }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    private fun registerUserInfo() {
-        viewModelZip.observeForever(viewModelObserver)
-        viewModelFlatMap.observeForever(viewModelMapObserver)
-        viewModelMap.observeForever(viewModelObserver)
-    }
+        mainViewModelData.addSource(viewModelZip) {(user1, user2) ->
+            mainViewModelData.value = MainViewModelData.Complete(user1.userName, user2.userAge, "${user1.userName} is ${user2.userAge}")
+        }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    private fun unregisterUserInfo() {
-        viewModelFlatMap.removeObserver(viewModelMapObserver)
-        viewModelMap.removeObserver(viewModelObserver)
-        viewModelZip.removeObserver(viewModelObserver)
+        mainViewModelData.addSource(viewModelMap) { userData ->
+            mainViewModelData.value = MainViewModelData.Complete(userData.userName, userData.userAge, "${userData.userName} is ${userData.userAge}")
+        }
     }
 }
 
