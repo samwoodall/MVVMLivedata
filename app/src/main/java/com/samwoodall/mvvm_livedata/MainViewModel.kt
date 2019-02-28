@@ -27,6 +27,12 @@ class MainViewModel(private val repo: Repository = Repository(), signInRepositor
             mainViewModelData.value = MainViewModelData.Complete(userData.userName, userData.userAge, "${userData.userName} is ${userData.userAge}")
         }
     }
+
+    fun oneTimeCall() {
+        mainViewModelData.addOneTimeSource(repo.getData("")) {
+            mainViewModelData.value = MainViewModelData.Complete(it.userName, 0, "one off call")
+        }
+    }
 }
 
 sealed class MainViewModelData {

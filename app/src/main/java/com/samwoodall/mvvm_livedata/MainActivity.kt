@@ -25,6 +25,11 @@ class MainActivity : AppCompatActivity() {
             })
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.oneTimeCall()
+    }
+
     private fun loading() {}
     private fun complete(complete: MainViewModelData.Complete) {
         hello.text = complete.userDesc
