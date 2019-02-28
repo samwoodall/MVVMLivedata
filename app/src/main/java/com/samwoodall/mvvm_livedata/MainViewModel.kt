@@ -30,7 +30,7 @@ class MainViewModel(private val repo: Repository = Repository(), signInRepositor
 
     fun oneTimeCall() {
         mainViewModelData.addOneTimeSource(repo.getData("")) {
-            mainViewModelData.value = MainViewModelData.Complete(it.userName, 0, "one off call")
+            value = MainViewModelData.Complete(it.userName, 0, "one off call")
         }
     }
 }

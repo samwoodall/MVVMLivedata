@@ -25,7 +25,7 @@ fun <T, A, B> LiveData<A>.combineAndCompute(other: LiveData<B>, onChange: (A, B)
     return result
 }
 
-fun <A, B> MediatorLiveData<A>.addOneTimeSource(source: LiveData<B>, onItemEmitted: (B) -> Unit) {
+fun <A, B> MediatorLiveData<A>.addOneTimeSource(source: LiveData<B>, onItemEmitted: MediatorLiveData<A>.(B) -> Unit) {
     addSource(source) {
         onItemEmitted(it)
         removeSource(source)
